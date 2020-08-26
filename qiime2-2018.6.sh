@@ -119,40 +119,6 @@ qiime diversity beta-group-significance \
   
 qiime tools view microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted-unifrac-captive-significance.qzv 
 
-#adonis analyses 
-
- qiime diversity adonis \
- --i-distance-matrix  /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted_unifrac_distance_matrix.qza \
- --m-metadata-file  /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/gut_metadatav5.txt \
- --p-formula sex \
- --o-visualization /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/sex_weighed_unifrac_adonis.qzv
-
- 
- qiime diversity adonis \
- --i-distance-matrix  /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted_unifrac_distance_matrix.qza \
- --m-metadata-file  /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/gut_metadatav5.txt \
- --p-formula captive \
- --o-visualization /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/captive_weighed_unifrac_adonis.qzv
- 
- 
- 
- qiime diversity adonis \
- --i-distance-matrix  /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted_unifrac_distance_matrix.qza \
- --m-metadata-file  /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/gut_metadatav5.txt \
- --p-formula species \
- --o-visualization /Users/arcova/Documents/microbiome/qiime_analysis_remove_duplicate_primers_marmosets/species_weighed_unifrac_adonis.qzv
-
-  
- 
-qiime diversity beta-group-significance \
-  --i-distance-matrix  microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted_unifrac_distance_matrix.qza \
-  --m-metadata-file microbiome/qiime_analysis_remove_duplicate_primers_marmosets/gut_metadatav5.txt \
-  --m-metadata-column species \
-  --o-visualization microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted-unifrac-species-significance.qzv \
-  --p-pairwise
- 
- qiime tools view microbiome/qiime_analysis_remove_duplicate_primers_marmosets/core-metrics-results/weighted_unifrac_emperor.qzv
- qiime tools view  microbiome/qiime_analysis_remove_duplicate_primers/core-metrics-results/weighted-unifrac-hybrid-significance.qzv
 
 #alpha rarefraction plotting 
   qiime diversity alpha-rarefaction \
