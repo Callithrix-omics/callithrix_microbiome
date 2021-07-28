@@ -1,0 +1,162 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r phyloseq KEGG pathway alphadiveristy plots}
+#follows http://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html
+
+
+library(dplyr)
+library(ggplot2)
+library(vegan)
+library(phyloseq)
+library(RColorBrewer)
+#data import 
+#https://vaulot.github.io/tutorials/Phyloseq_tutorial.html
+
+#input rounded PICRUST2 KEGG pathway abundances 
+otu_mat=read.csv("/picrust2/KEGG_pathways_out/path_abun_unstrat_rounded_phyloseq.csv",header=TRUE)
+
+#make phyloseq object 
+#Phyloseq objects need to have row.names, define the row names from the otu column
+
+otu_mat <- otu_mat %>%
+    tibble::column_to_rownames("NAME") 
+
+ tax_mat=read.csv("/phyloseq/taxonomy_phyloseq_picrust.csv", header=TRUE)
+
+ tax_mat <- tax_mat %>% 
+    tibble::column_to_rownames("KOID")
+ 
+ samples_df=read.table("metadata.phyloseq.txt",header=TRUE, sep="\t")
+ 
+ samples_df <- samples_df %>% 
+    tibble::column_to_rownames("HostID")
+ 
+ #transform into matrixes out and tax table 
+ otu_mat <- as.matrix(otu_mat)
+  tax_mat <- as.matrix(tax_mat)
+  
+#transform to phloseq objects 
+OTU = otu_table(otu_mat, taxa_are_rows = TRUE)
+TAX = tax_table(tax_mat)
+samples = sample_data(samples_df)
+  
+marmo <- phyloseq(OTU, TAX, samples)
+
+
+#alpha diveristy 
+plot_richness(marmo, x="captive", color="species", measures=c("Shannon"))
+
+p=ggplot(samples, aes(x = captive, y = shannon, fill=factor(captive) )) + 
+  geom_boxplot()
+
+p
+
+p=ggplot(samples, aes(x = species, y = shannon, fill=factor(species) )) + 
+  geom_boxplot()
+
+print(p)
+```
+
+```{r anova alpha}
+
+library(car)
+#estimate alphadiveristy measures as data frame 
+alpha_in= estimate_richness(marmo, split = TRUE, measures = NULL)
+
+samples=sample_data(marmo)
+
+samples$shannon=alpha_in$Shannon
+
+samples=as_tibble(samples)
+
+
+alpha.m3 = aov(shannon ~ captive*species, data=samples)
+summary(alpha.m3)
+alpha.m3
+plot(alpha.m3, which=c(1,2))
+
+tukey.m3<-TukeyHSD(alpha.m3)
+
+tukey.m3
+
+#remove samples with leverage of 1 
+
+samples_slice <- samples[ -c(1,2, 10, 11,19),]
+
+alpha.m3 = aov(shannon ~ captive*species, data=samples_slice)
+summary(alpha.m3)
+alpha.m3
+plot(alpha.m3, which=c(1,2))
+
+
+
+alpha.m2 = aov(shannon ~ captive+species, data=samples_slice)
+summary(alpha.m2)
+alpha.m2
+plot(alpha.m2, which=c(1,2))
+
+#type II anova unbalanced design 
+#https://md.psych.bio.uni-goettingen.de/mv/unit/lm_cat/lm_cat_unbal_ss_explained.html
+Anova(alpha.m2, type="II")
+
+tukey.m2<-TukeyHSD(alpha.m2)
+
+tukey.m2
+
+```
+
+```{r NMDS}
+
+marmo.ord=ordinate(marmo,"NMDS", "bray")
+
+p1=plot_ordination(marmo,marmo.ord, color="species",shape="captive")
+
+print(p1)
+
+```
+
+```{r permanova}
+#https://github.com/kdyson/R_Scripts/blob/master/AICc_PERMANOVA.R
+
+
+set.seed(25)
+
+# Calculate bray curtis distance matrix
+marmoset_bray <- phyloseq::distance(marmo, method = "bray")
+
+library(EcolUtils)
+#make data frame of sample data 
+sampledf <- data.frame(sample_data(marmo))
+
+#run adonis2
+
+
+m11=adonis2(marmoset_bray~ captive+species, data=sampledf, by="margin")
+m11
+
+
+library(MASS)
+library(vegan)
+data=read.csv("phyloseq_vegan_t.csv" , header=TRUE)
+
+#make community matrix - extract columns with abundance information
+com = data[,2:ncol(data)]
+
+#turn abundance data frame into a matrix
+m_com = as.matrix(com)
+
+
+bray.marmo=vegdist(m_com, method="bray")
+samples_df$captive=as.factor(samples_df$captive)
+adonis.pair(bray.marmo, samples_df$captive, nper = 1000, corr.method = "fdr")
+
+
+
+
+```
+
