@@ -1,0 +1,214 @@
+---
+title: "R code for Malukiewicz et al. Callithrix Microbiomes"
+output: html_notebook
+---
+
+```{r anova alpha diverity bacterial features sharron index values}
+
+#data import 
+library(car) #for levene's test 
+library(dplyr)
+
+#read input data sharron indices
+samples_df=read.table("phyloseq.alpha.tsv", header=TRUE)
+ 
+#convert input to tibble 
+samples_df <- samples_df %>% 
+    tibble::column_to_rownames("HostID")
+ 
+
+  
+summary(samples_df)
+  
+#set up anova models 
+
+
+alpha.m1 = aov(shannon ~ captive*species, data=samples_df)
+summary(alpha.m1)
+alpha.m1
+plot(alpha.m1, which=c(1,2))
+
+
+alpha.m2 = aov(shannon ~ captive+species, data=samples_df)
+summary(alpha.m2)
+alpha.m2
+plot(alpha.m2, which=c(1,2))
+
+#carry out Levene's test 
+leve.m1 = leveneTest(shannon ~ captive, data=samples_df)
+leve.m2 = leveneTest(shannon ~ species, data=samples_df)
+
+
+#post hoc test 
+tukey.m2<-TukeyHSD(alpha.m2)
+
+tukey.m2
+
+
+#type II anova unbalanced design 
+#https://md.psych.bio.uni-goettingen.de/mv/unit/lm_cat/lm_cat_unbal_ss_explained.html
+Anova(alpha.m2, type="II")
+
+
+```
+
+
+```{r NMDS bacterial features}
+
+library(MASS)
+library(vegan)
+
+data=read.csv("table.from_biom_vegan_transpose.csv" , header=TRUE)
+
+#make community matrix by extracting  columns with abundance information
+com = data[,4:ncol(data)]
+
+#turn abundance data frame into a matrix
+m_com = as.matrix(com)
+
+set.seed(123)
+nmds = metaMDS(m_com, distance = "bray")
+nmds
+
+plot(nmds)
+
+#extract NMDS scores (x and y coordinates)
+data.scores = as.data.frame(scores(nmds))
+
+#add columns to data frame 
+data.scores$Sample = data$Sample
+data.scores$Species = data$Species
+data.scores$Captive = data$Captive
+ 
+head(data.scores)
+
+library(ggplot2)
+
+#plot NMDS results 
+
+xx = ggplot(data.scores, aes(x = NMDS1, y = NMDS2))+ 
+    geom_point(size = 4, aes( shape = Captive, colour = Species))
+ 
+ 
+xx
+
+
+
+```
+
+
+```{r phyloseq make phyloseq object out of bacterial feature counts}
+#follows http://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+   # install.packages("BiocManager")
+
+#BiocManager::install("phyloseq")
+
+
+
+library(phyloseq)
+
+
+#set up phyloseq object 
+#data import 
+#https://vaulot.github.io/tutorials/Phyloseq_tutorial.html followed for reference 
+otu_mat=read.table("otu_table.txt",header=TRUE)
+
+
+#Phyloseq objects need to have row.names, define the row names from the otu column
+
+otu_mat <- otu_mat %>%
+    tibble::column_to_rownames("OTUID") 
+
+tax_mat=read.table("taxonomy_phyloseq.tsv",header=TRUE)
+
+ tax_mat <- tax_mat %>% 
+    tibble::column_to_rownames("OTUID")
+ 
+ samples_df=read.table("phyloseq.txt",header=TRUE)
+ 
+ samples_df <- samples_df %>% 
+    tibble::column_to_rownames("HostID")
+ 
+ #transform into matrixes out and tax table 
+ otu_mat <- as.matrix(otu_mat)
+  tax_mat <- as.matrix(tax_mat)
+  
+#transform to phloseq objects 
+OTU = otu_table(otu_mat, taxa_are_rows = TRUE)
+TAX = tax_table(tax_mat)
+samples = sample_data(samples_df)
+  
+marmo <- phyloseq(OTU, TAX, samples)
+  
+  
+```
+
+```{r permanova of bacterial feature counts}
+#https://github.com/kdyson/R_Scripts/blob/master/AICc_PERMANOVA.R
+
+# Calculate bray curtis distance matrix
+marmoset_bray <- phyloseq::distance(marmo, method = "bray")
+
+library(EcolUtils)
+#make data frame of sample data 
+sampledf <- data.frame(sample_data(marmo))
+
+#run adonis2
+
+
+
+m12=adonis2(marmoset_bray~ captive+species, data=sampledf, by="margin")
+m12
+
+
+bray.marmo=vegdist(m_com, method="bray")
+samples_df$captive=as.factor(samples_df$captive)
+adonis.pair(bray.marmo, samples_df$captive, nper = 1000, corr.method = "fdr")
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+```{r  calculate percentages of bacterial abundance}
+abund=read.csv("transpose_abundance_captive.csv",header=TRUE)
+abund=as_tibble(abund)
+
+abundw=filter(abund, captive =="W")
+abundc=filter(abund, captive =="C")
+abunds=filter(abund, captive =="S")
+
+
+abundj=filter(abund, captive =="S")
+
+
+
+mean(abundw$c__Actinobacteria)
+ mean(abundc$c__Gammaproteobacteria)
+mean(abunds$c__Campylobacteria)
+mean(abunds$c__Bacteroidia)
+
+
+abund2=read.csv("åtranspose_abundance_species.csv",header=TRUE)
+abund2=as_tibble(abund2)
+
+abundj=filter(abund2, species =="J")
+abundp=filter(abund2, species =="P")
+abundg=filter(abund2, species =="G")
+abunda=filter(abund2, species =="A")
+abundjp=filter(abund2, species =="JP")
+abundspg=filter(abund2, species =="PG")
+
+
+
+```
+
