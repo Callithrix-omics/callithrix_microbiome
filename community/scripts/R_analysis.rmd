@@ -3,7 +3,7 @@ title: "R code for Malukiewicz et al. Callithrix Microbiomes"
 output: html_notebook
 ---
 
-```{r anova alpha diverity bacterial features sharron index values}
+```{r anova alpha diverity bacterial features sharon index values}
 
 #data import 
 library(car) #for levene's test 
