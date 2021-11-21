@@ -6,18 +6,32 @@ output: html_notebook
 ```{r alpha diversity GLM}
 
 
+library(multcomp)
+
 #load data with host bacterial feature observed counts which can be obtained from Supplementary Table S1
 
 data.obs=read.csv("bacterial_feature_counts.csv", header=TRUE)
 
+data.obs$species=as.factor(data.obs$species)
+data.obs$captive=as.factor(data.obs$captive)
+
+
 #build glm 
 obs.m1=glm(value ~ species+captive, data=data.obs, family=poisson)
+
 
 #check results 
 
 summary(obs.m1)
 
 anova(obs.m1, test="Chisq")
+
+#multiple testing
+
+K1 <- glht(obs.m1, mcp(captive = "Tukey"))$linfct
+K2 <- glht(obs.m1, mcp(species = "Tukey"))$linfct
+summary(glht(obs.m1, linfct = rbind(K1, K2)))
+
 
 
 #diagostic plots 
