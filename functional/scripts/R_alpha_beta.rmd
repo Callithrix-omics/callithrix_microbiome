@@ -62,51 +62,26 @@ p=ggplot(samples, aes(x = species, y = shannon, fill=factor(species) )) +
 print(p)
 ```
 
-```{r anova alpha}
+```{r glm picrust}
 
-library(car)
-#estimate alphadiveristy measures as data frame 
-alpha_in= estimate_richness(marmo, split = TRUE, measures = NULL)
+#read in data
+data.obs=read.table(file="observed_richness_KEGG.tsv", header= TRUE )
 
-samples=sample_data(marmo)
-
-samples$shannon=alpha_in$Shannon
-
-samples=as_tibble(samples)
+#fit GLM
+obs.m1=glm(Observed ~ Taxon+Environment, data=data.obs, family=poisson)
 
 
-alpha.m3 = aov(shannon ~ captive*species, data=samples)
-summary(alpha.m3)
-alpha.m3
-plot(alpha.m3, which=c(1,2))
+#check GLM
+summary(obs.m1)
+summary(obs.m1)$dispersion
 
-tukey.m3<-TukeyHSD(alpha.m3)
+anova(obs.m1, test="Chisq")
 
-tukey.m3
+#diagnostic plots
+plot(obs.m1)
 
-#remove samples with leverage of 1 
+coef(summary(obs.m1))
 
-samples_slice <- samples[ -c(1,2, 10, 11,19),]
-
-alpha.m3 = aov(shannon ~ captive*species, data=samples_slice)
-summary(alpha.m3)
-alpha.m3
-plot(alpha.m3, which=c(1,2))
-
-
-
-alpha.m2 = aov(shannon ~ captive+species, data=samples_slice)
-summary(alpha.m2)
-alpha.m2
-plot(alpha.m2, which=c(1,2))
-
-#type II anova unbalanced design 
-#https://md.psych.bio.uni-goettingen.de/mv/unit/lm_cat/lm_cat_unbal_ss_explained.html
-Anova(alpha.m2, type="II")
-
-tukey.m2<-TukeyHSD(alpha.m2)
-
-tukey.m2
 
 ```
 
