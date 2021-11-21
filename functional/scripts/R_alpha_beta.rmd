@@ -5,7 +5,7 @@ output: html_notebook
 
 
 
-```{r phyloseq KEGG pathway alphadiveristy plots}
+```{r phyloseq KEGG pathway alpha diveristy plots}
 #follows http://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html
 
 
@@ -64,7 +64,7 @@ print(p)
 
 ```{r glm picrust}
 
-#read in data
+#read in data which can be obtained from Supplementary Table S1 column called "Observed Gut Microbiome Richness based on Predicted KEGG Pathways"
 data.obs=read.table(file="observed_richness_KEGG.tsv", header= TRUE )
 
 #fit GLM
