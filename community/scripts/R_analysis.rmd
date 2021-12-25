@@ -119,9 +119,8 @@ library(ggplot2)
 
 #plot NMDS results 
 
-xx = ggplot(data.scores, aes(x = NMDS1, y = NMDS2))+ 
-    geom_point(size = 4, aes( shape = Captive, colour = Species))
- 
+xx = ggplot(data.scores, mapping=aes(x = NMDS1, y = NMDS2, color=Captive, shape=Species))+ 
+    geom_point(size = 4)+  scale_shape_manual(values = c(8:15)) 
  
 xx
 
